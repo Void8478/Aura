@@ -109,3 +109,15 @@ export interface RadioStation {
   frequencies: string;
   tracks: Track[];
 }
+
+export interface Artist {
+  id: string;
+  name: string;
+  bio: string;
+  location?: string;
+  genre?: string;
+  artworkUrl: string;
+  tracksCount?: number;
+  popularity?: number;
+}
+
