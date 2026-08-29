@@ -5,11 +5,10 @@ import { useLibraryStore } from '../store/useLibraryStore';
 export function useKeyboardShortcuts() {
   const {
     togglePlay,
-    nextTrack,
-    prevTrack,
+    next,
+    previous,
     toggleMute,
     toggleVisualizer,
-    toggleQueue,
     isSearchOpen,
     setIsSearchOpen,
     isShortcutsOpen,
@@ -71,15 +70,15 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // J or Left Arrow -> Seek back 5s
-      if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowLeft') {
+      // Left Arrow -> Seek back 5s
+      if (e.key === 'ArrowLeft') {
         e.preventDefault();
         seek(Math.max(0, currentTime - 5));
         return;
       }
 
-      // K or Right Arrow -> Seek forward 5s
-      if (e.key === 'k' || e.key === 'K' || e.key === 'ArrowRight') {
+      // Right Arrow -> Seek forward 5s
+      if (e.key === 'ArrowRight') {
         e.preventDefault();
         seek(currentTime + 5);
         return;
@@ -88,14 +87,14 @@ export function useKeyboardShortcuts() {
       // N -> Next Track
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
-        nextTrack();
+        next();
         return;
       }
 
       // P -> Previous Track
       if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
-        prevTrack();
+        previous();
         return;
       }
 
@@ -110,7 +109,7 @@ export function useKeyboardShortcuts() {
       if (e.key === 'l' || e.key === 'L') {
         if (currentTrack) {
           e.preventDefault();
-          toggleFavorite(currentTrack.id);
+          toggleFavorite(currentTrack.id, currentTrack);
         }
         return;
       }
@@ -125,7 +124,7 @@ export function useKeyboardShortcuts() {
       // Q -> Toggle Queue Drawer
       if (e.key === 'q' || e.key === 'Q') {
         e.preventDefault();
-        toggleQueue();
+        setIsQueueOpen(!isQueueOpen);
         return;
       }
 
@@ -141,11 +140,10 @@ export function useKeyboardShortcuts() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     togglePlay,
-    nextTrack,
-    prevTrack,
+    next,
+    previous,
     toggleMute,
     toggleVisualizer,
-    toggleQueue,
     isSearchOpen,
     setIsSearchOpen,
     isShortcutsOpen,
@@ -160,3 +158,4 @@ export function useKeyboardShortcuts() {
     toggleFavorite,
   ]);
 }
+export default useKeyboardShortcuts;
