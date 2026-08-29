@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --color-aura-950: #09090b;
+  --color-aura-900: #0e0e11;
+  --color-aura-850: #141418;
+  --color-aura-800: #1c1c22;
+  --color-aura-700: #282830;
+  --color-aura-600: #3f3f4c;
+  --color-aura-500: #686675;
+  --color-aura-400: #9491a1;
+  --color-aura-300: #c5c2d3;
+  --color-aura-200: #e4e2ed;
+  --color-aura-100: #f4f2f8;
+  --color-aura-50: #faf9fc;
+
+  --color-aura-accent: #e07a5f;
+  --color-aura-accent-hover: #ea8c73;
+  --color-aura-amber: #d4a373;
+  --color-aura-amber-hover: #e2b385;
+  --color-aura-olive: #819875;
+
+  --font-serif: 'Fraunces', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', Menlo, monospace;
+
+  --shadow-aura-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-aura-elevated: 0 12px 32px -4px rgba(0, 0, 0, 0.7);
+  --shadow-aura-deck: 0 20px 48px -8px rgba(0, 0, 0, 0.9), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+
+  --animate-spin-slow: spin 20s linear infinite;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #0e0e11;
+    color: #e4e2ed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom scrollbar with restrained tactile aesthetic */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #09090b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #282830;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f4c;
+  }
+}
+
+/* Subtle grain texture overlay */
+.bg-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Tactile card styles */
+.tactile-card {
+  background: linear-gradient(180deg, rgba(28, 28, 34, 0.6) 0%, rgba(20, 20, 24, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.6);
+}
+
+.tactile-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tactile-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.8);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
