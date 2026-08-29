@@ -4,7 +4,10 @@ import { CURATED_TRACKS } from '../services/mockCatalog';
 import { audioService } from '../services/audioService';
 
 interface PlayerStore {
+  // State variables
   currentTrack: Track | null;
+  queue: Track[];
+  currentIndex: number;
   isPlaying: boolean;
   isLoading: boolean;
   currentTime: number;
@@ -13,18 +16,11 @@ interface PlayerStore {
   volume: number;
   prevVolume: number;
   isMuted: boolean;
-  repeatMode: RepeatMode;
-  isShuffled: boolean;
+  shuffle: boolean;
+  repeat: RepeatMode;
   playbackRate: number;
-  
-  // Queue & History
-  queue: Track[];
-  queueIndex: number;
-  history: Track[];
-  
-  // Real-time audio spectrum
   frequencyData: number[];
-  
+
   // UI Panels
   isVisualizerExpanded: boolean;
   isQueueOpen: boolean;
@@ -37,26 +33,30 @@ interface PlayerStore {
   togglePlay: () => void;
   pause: () => void;
   resume: () => void;
-  nextTrack: () => void;
-  prevTrack: () => void;
+  next: () => void;
+  previous: () => void;
   seek: (seconds: number) => void;
   setVolume: (vol: number) => void;
   toggleMute: () => void;
-  setRepeatMode: (mode: RepeatMode) => void;
-  cycleRepeatMode: () => void;
   toggleShuffle: () => void;
-  setPlaybackRate: (rate: number) => void;
-  
-  // Queue Actions
+  toggleRepeat: () => void;
   addToQueue: (track: Track) => void;
-  addToQueueNext: (track: Track) => void;
-  removeFromQueue: (index: number) => void;
+  removeFromQueue: (trackId: string) => void;
   clearQueue: () => void;
+
+  // Legacy/Compatibility support (to avoid breaking other pages)
+  nextTrack: () => void;
+  prevTrack: () => void;
+  cycleRepeatMode: () => void;
+  setRepeatMode: (mode: RepeatMode) => void;
   setQueue: (queue: Track[]) => void;
-  
-  // UI Toggle Actions
-  setIsVisualizerExpanded: (expanded: boolean) => void;
+  addToQueueNext: (track: Track) => void;
+  playbackRateSetting: (rate: number) => void;
+  isShuffled: boolean;
+  repeatMode: RepeatMode;
+  queueIndex: number;
   toggleVisualizer: () => void;
+  setIsVisualizerExpanded: (expanded: boolean) => void;
   setIsQueueOpen: (open: boolean) => void;
   toggleQueue: () => void;
   setIsLinerNotesOpen: (open: boolean) => void;
@@ -65,7 +65,21 @@ interface PlayerStore {
   setIsShortcutsOpen: (open: boolean) => void;
 }
 
+// Persisted configuration loaders
+const loadSavedQueue = (): Track[] => {
+  try {
+    const raw = localStorage.getItem('aura_queue');
+    return raw ? JSON.parse(raw) : [...CURATED_TRACKS];
+  } catch {
+    return [...CURATED_TRACKS];
+  }
+};
+
 const SAVED_VOLUME = parseFloat(localStorage.getItem('aura_volume') || '0.85');
+const SAVED_SHUFFLE = localStorage.getItem('aura_shuffle') === 'true';
+const SAVED_REPEAT = (localStorage.getItem('aura_repeat') || 'off') as RepeatMode;
+const SAVED_QUEUE = loadSavedQueue();
+const INITIAL_TRACK = SAVED_QUEUE[0] || CURATED_TRACKS[0];
 
 export const usePlayerStore = create<PlayerStore>((set, get) => {
   // Wire up audio service callbacks
@@ -78,12 +92,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       set({ frequencyData: normalized });
     },
     onTrackEnded: () => {
-      const { repeatMode, currentTrack, nextTrack } = get();
-      if (repeatMode === 'one' && currentTrack) {
+      const { repeat, currentTrack, next } = get();
+      if (repeat === 'one' && currentTrack) {
         audioService.seek(0);
         audioService.play();
       } else {
-        nextTrack();
+        next();
       }
     },
     onError: (err) => {
@@ -92,26 +106,34 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
     },
   });
 
+  // Initialize Volume
   audioService.setVolume(SAVED_VOLUME);
 
+  const saveQueueToStorage = (q: Track[]) => {
+    localStorage.setItem('aura_queue', JSON.stringify(q));
+  };
+
   return {
-    currentTrack: CURATED_TRACKS[0],
+    currentTrack: INITIAL_TRACK,
+    queue: SAVED_QUEUE,
+    currentIndex: 0,
     isPlaying: false,
     isLoading: false,
     currentTime: 0,
-    duration: CURATED_TRACKS[0].duration,
+    duration: INITIAL_TRACK ? INITIAL_TRACK.duration : 0,
     buffered: 0,
     volume: SAVED_VOLUME,
     prevVolume: SAVED_VOLUME,
     isMuted: false,
-    repeatMode: 'off',
-    isShuffled: false,
+    shuffle: SAVED_SHUFFLE,
+    repeat: SAVED_REPEAT,
     playbackRate: 1.0,
-
-    queue: [...CURATED_TRACKS],
-    queueIndex: 0,
-    history: [],
     frequencyData: new Array(32).fill(0),
+
+    // Compat variables
+    isShuffled: SAVED_SHUFFLE,
+    repeatMode: SAVED_REPEAT,
+    queueIndex: 0,
 
     isVisualizerExpanded: false,
     isQueueOpen: false,
@@ -132,11 +154,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       set({
         currentTrack: track,
         queue: updatedQueue,
+        currentIndex: targetIndex,
         queueIndex: targetIndex,
-        history: state.currentTrack ? [state.currentTrack, ...state.history.slice(0, 20)] : state.history,
         isLoading: true,
       });
 
+      saveQueueToStorage(updatedQueue);
       audioService.loadAndPlay(track.audioUrl, 0);
     },
 
@@ -159,16 +182,16 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       audioService.play();
     },
 
-    nextTrack: () => {
-      const { queue, queueIndex, repeatMode, isShuffled, playTrack } = get();
+    next: () => {
+      const { queue, currentIndex, repeat, shuffle, playTrack } = get();
       if (queue.length === 0) return;
 
-      let nextIndex = queueIndex + 1;
+      let nextIndex = currentIndex + 1;
 
-      if (isShuffled) {
+      if (shuffle) {
         nextIndex = Math.floor(Math.random() * queue.length);
       } else if (nextIndex >= queue.length) {
-        if (repeatMode === 'all') {
+        if (repeat === 'all') {
           nextIndex = 0;
         } else {
           audioService.pause();
@@ -176,23 +199,23 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
         }
       }
 
-      const next = queue[nextIndex];
-      if (next) {
-        playTrack(next);
+      const nextTrack = queue[nextIndex];
+      if (nextTrack) {
+        playTrack(nextTrack);
       }
     },
 
-    prevTrack: () => {
-      const { queue, queueIndex, currentTime, playTrack } = get();
+    previous: () => {
+      const { queue, currentIndex, currentTime, playTrack } = get();
       if (currentTime > 3) {
         audioService.seek(0);
         return;
       }
 
-      const prevIndex = queueIndex > 0 ? queueIndex - 1 : queue.length - 1;
-      const prev = queue[prevIndex];
-      if (prev) {
-        playTrack(prev);
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
+      const prevTrack = queue[prevIndex];
+      if (prevTrack) {
+        playTrack(prevTrack);
       }
     },
 
@@ -220,94 +243,101 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       }
     },
 
-    setRepeatMode: (mode: RepeatMode) => {
-      set({ repeatMode: mode });
+    toggleShuffle: () => {
+      const nextShuffleState = !get().shuffle;
+      localStorage.setItem('aura_shuffle', nextShuffleState.toString());
+      set({ shuffle: nextShuffleState, isShuffled: nextShuffleState });
     },
 
-    cycleRepeatMode: () => {
-      const { repeatMode } = get();
+    toggleRepeat: () => {
+      const { repeat } = get();
       const cycleMap: Record<RepeatMode, RepeatMode> = {
         off: 'all',
         all: 'one',
         one: 'off',
       };
-      set({ repeatMode: cycleMap[repeatMode] });
-    },
-
-    toggleShuffle: () => {
-      set((state) => ({ isShuffled: !state.isShuffled }));
-    },
-
-    setPlaybackRate: (rate: number) => {
-      audioService.setPlaybackRate(rate);
-      set({ playbackRate: rate });
+      const nextRepeatState = cycleMap[repeat];
+      localStorage.setItem('aura_repeat', nextRepeatState);
+      set({ repeat: nextRepeatState, repeatMode: nextRepeatState });
     },
 
     addToQueue: (track: Track) => {
-      set((state) => ({
-        queue: [...state.queue, track],
-      }));
+      const newQueue = [...get().queue, track];
+      saveQueueToStorage(newQueue);
+      set({ queue: newQueue });
     },
 
-    addToQueueNext: (track: Track) => {
-      set((state) => {
-        const newQueue = [...state.queue];
-        newQueue.splice(state.queueIndex + 1, 0, track);
-        return { queue: newQueue };
-      });
-    },
+    removeFromQueue: (trackId: string) => {
+      const { queue, currentIndex } = get();
+      const targetIndex = queue.findIndex((t) => t.id === trackId);
+      if (targetIndex === -1) return;
 
-    removeFromQueue: (index: number) => {
-      set((state) => {
-        const newQueue = state.queue.filter((_, i) => i !== index);
-        let newIndex = state.queueIndex;
-        if (index < state.queueIndex) {
-          newIndex = Math.max(0, state.queueIndex - 1);
-        }
-        return { queue: newQueue, queueIndex: newIndex };
-      });
+      const newQueue = queue.filter((t) => t.id !== trackId);
+      let newIndex = currentIndex;
+      if (targetIndex < currentIndex) {
+        newIndex = Math.max(0, currentIndex - 1);
+      }
+
+      saveQueueToStorage(newQueue);
+      set({ queue: newQueue, currentIndex: newIndex, queueIndex: newIndex });
     },
 
     clearQueue: () => {
       const { currentTrack } = get();
+      const newQueue = currentTrack ? [currentTrack] : [];
+      saveQueueToStorage(newQueue);
       set({
-        queue: currentTrack ? [currentTrack] : [],
+        queue: newQueue,
+        currentIndex: 0,
         queueIndex: 0,
       });
     },
 
-    setQueue: (queue: Track[]) => {
-      set({ queue });
+    // Compat Actions
+    nextTrack: () => get().next(),
+    prevTrack: () => get().previous(),
+    cycleRepeatMode: () => get().toggleRepeat(),
+    setRepeatMode: (mode: RepeatMode) => {
+      localStorage.setItem('aura_repeat', mode);
+      set({ repeat: mode, repeatMode: mode });
     },
-
-    setIsVisualizerExpanded: (expanded: boolean) => {
-      set({ isVisualizerExpanded: expanded });
+    setQueue: (q: Track[]) => {
+      saveQueueToStorage(q);
+      set({ queue: q });
+    },
+    addToQueueNext: (track: Track) => {
+      const { queue, currentIndex } = get();
+      const newQueue = [...queue];
+      newQueue.splice(currentIndex + 1, 0, track);
+      saveQueueToStorage(newQueue);
+      set({ queue: newQueue });
+    },
+    playbackRateSetting: (rate: number) => {
+      audioService.setPlaybackRate(rate);
+      set({ playbackRate: rate });
     },
 
     toggleVisualizer: () => {
       set((state) => ({ isVisualizerExpanded: !state.isVisualizerExpanded }));
     },
-
+    setIsVisualizerExpanded: (expanded: boolean) => {
+      set({ isVisualizerExpanded: expanded });
+    },
     setIsQueueOpen: (open: boolean) => {
       set({ isQueueOpen: open });
     },
-
     toggleQueue: () => {
       set((state) => ({ isQueueOpen: !state.isQueueOpen }));
     },
-
     setIsLinerNotesOpen: (open: boolean) => {
       set({ isLinerNotesOpen: open });
     },
-
     toggleLinerNotes: () => {
       set((state) => ({ isLinerNotesOpen: !state.isLinerNotesOpen }));
     },
-
     setIsSearchOpen: (open: boolean) => {
       set({ isSearchOpen: open });
     },
-
     setIsShortcutsOpen: (open: boolean) => {
       set({ isShortcutsOpen: open });
     },

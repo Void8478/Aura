@@ -167,7 +167,7 @@ export const QueueDrawer: React.FC = () => {
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => removeFromQueue(idx)}
+                            onClick={() => removeFromQueue(track.id)}
                             className="p-1 text-aura-400 hover:text-aura-accent"
                             title="Remove from queue"
                           >
