@@ -1,45 +1,111 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, ArrowLeft, Disc, MapPin, Clock, Share2 } from 'lucide-react';
-import { CURATED_ALBUMS } from '../services/mockCatalog';
+import { ArrowLeft, Play, Shuffle, Heart, MapPin, Disc, Clock } from 'lucide-react';
+import type { Album } from '../types/music';
+import { getAlbum } from '../services/jamendo';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useLibraryStore } from '../store/useLibraryStore';
 import { ArtworkImage } from '../components/ui/ArtworkImage';
 import { Badge } from '../components/ui/Badge';
 import { TactileButton } from '../components/ui/TactileButton';
 import { TrackRow } from '../components/common/TrackRow';
-import { WaveformPreview } from '../components/ui/WaveformPreview';
+import { AlbumCardSkeleton } from '../components/ui/Skeleton';
+import { ErrorState } from '../components/ui/ErrorState';
 
 export const ReleaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { playTrack } = usePlayerStore();
-  const [copied, setCopied] = React.useState(false);
+  const { playTrack, toggleShuffle } = usePlayerStore();
+  const { isFavorite, toggleFavorite } = useLibraryStore();
 
-  const album = CURATED_ALBUMS.find((a) => a.id === id) || CURATED_ALBUMS[0];
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [album, setAlbum] = useState<Album | null>(null);
 
-  const handlePlayAlbum = () => {
-    if (album.tracks.length > 0) {
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+
+    async function loadAlbumDetails() {
+      setIsLoading(true);
+      setHasError(false);
+      try {
+        const data = await getAlbum(id || '');
+        if (active) {
+          if (data) {
+            setAlbum(data);
+          } else {
+            setHasError(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading album details:', err);
+        if (active) setHasError(true);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+
+    loadAlbumDetails();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const handlePlayAll = () => {
+    if (album && album.tracks.length > 0) {
       playTrack(album.tracks[0], album.tracks);
     }
   };
 
-  const handleShare = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const handleShufflePlay = () => {
+    if (album && album.tracks.length > 0) {
+      const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
+      playTrack(shuffled[0], shuffled);
+      toggleShuffle();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          <div className="md:col-span-4">
+            <AlbumCardSkeleton />
+          </div>
+          <div className="md:col-span-8 space-y-4">
+            <div className="h-6 w-32 bg-aura-800/40 rounded animate-pulse" />
+            <div className="h-10 w-2/3 bg-aura-800/40 rounded animate-pulse" />
+            <div className="h-24 w-full bg-aura-800/40 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError || !album) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <ErrorState
+          title="Release Dispatch Missing"
+          message="We were unable to locate this specific compiled audio archive. Check your connection or explore another edition."
+          onRetry={() => navigate('/discover')}
+        />
+      </div>
+    );
+  }
+
+  const albumId = album.id || '';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-12">
       <div>
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-xs font-mono text-aura-400 hover:text-aura-100 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-mono text-aura-400 hover:text-aura-100 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dispatches
+          Back
         </button>
       </div>
 
@@ -87,81 +153,78 @@ export const ReleaseDetail: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <TactileButton
               variant="primary"
               size="lg"
-              onClick={handlePlayAlbum}
+              onClick={handlePlayAll}
               className="gap-2 shadow-aura-subtle"
             >
-              <Play className="w-4 h-4 fill-current" />
-              Play Entire Release ({album.tracks.length} Cuts)
+              <Play className="w-4 h-4 fill-current ml-0.5" />
+              Play All ({album.tracks.length})
             </TactileButton>
 
             <TactileButton
               variant="secondary"
               size="lg"
-              onClick={handleShare}
-              className="gap-1.5"
+              onClick={handleShufflePlay}
+              className="gap-2"
             >
-              <Share2 className="w-4 h-4" />
-              {copied ? 'Link Copied' : 'Share Liner Notes'}
+              <Shuffle className="w-4 h-4" />
+              Shuffle
+            </TactileButton>
+
+            <TactileButton
+              variant="secondary"
+              size="lg"
+              onClick={() => toggleFavorite(albumId)}
+              className="p-3"
+              aria-label="Favorite Album"
+            >
+              <Heart
+                className={`w-4 h-4 ${
+                  isFavorite(albumId)
+                    ? 'fill-aura-accent text-aura-accent'
+                    : 'text-aura-400 hover:text-aura-100'
+                }`}
+              />
             </TactileButton>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-7 space-y-6">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-aura-accent">
-              Curator Essay & Historical Context
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl text-aura-100 font-medium mt-1">
-              Acoustic Architecture & Recording Log
-            </h2>
-          </div>
-
-          <div className="prose prose-invert max-w-none text-aura-300 font-sans leading-relaxed text-base space-y-4">
-            <p>{album.curatorEssay}</p>
-            <p>
-              Mastered strictly for high-fidelity spatial reproduction. No dynamic range compression
-              has been applied to the master buss in order to retain the subtle organic transients of
-              felt hammers and tape hiss.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-aura-850 border border-aura-800 space-y-2">
-            <span className="text-[11px] font-mono uppercase text-aura-400">
-              Master Composite Frequency Profile
-            </span>
-            <WaveformPreview barsCount={36} activeColor="bg-aura-amber" />
-          </div>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b border-aura-800 pb-3">
+          <h3 className="font-serif text-xl text-aura-100 font-medium">Recordings & Timeline</h3>
+          <span className="text-xs font-mono text-aura-500">
+            {album.tracks.length} Cuts
+          </span>
         </div>
 
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-aura-800 pb-3">
-            <h3 className="font-serif text-xl text-aura-100 font-medium">Release Tracklist</h3>
-            <span className="text-xs font-mono text-aura-500">
-              {album.tracks.length} Tracks
-            </span>
-          </div>
-
-          <div className="divide-y divide-aura-800/40">
-            {album.tracks.map((track, idx) => (
-              <TrackRow
-                key={track.id}
-                track={track}
-                index={idx}
-                showCover={false}
-                showAlbum={false}
-                showBpm={true}
-                playlistContext={album.tracks}
-              />
-            ))}
-          </div>
+        <div className="divide-y divide-aura-800/40">
+          {album.tracks.map((track, idx) => (
+            <TrackRow
+              key={track.id}
+              track={track}
+              index={idx}
+              playlistContext={album.tracks}
+            />
+          ))}
         </div>
       </section>
+
+      {album.curatorEssay && (
+        <section className="p-6 md:p-8 rounded-3xl bg-aura-850/60 border border-aura-800 space-y-3">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-aura-accent font-medium">
+            Liner Notes & Background Curation
+          </span>
+          <p className="text-sm text-aura-300 font-sans leading-relaxed text-justify">
+            {album.curatorEssay}
+          </p>
+        </section>
+      )}
     </div>
   );
 };
+
+export default ReleaseDetail;
