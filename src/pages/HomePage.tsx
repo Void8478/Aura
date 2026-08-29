@@ -191,22 +191,22 @@ export const HomePage: React.FC = () => {
             onAction={() => navigate('/recent')}
           />
           <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
-            {recentlyPlayed.slice(0, 5).map((track) => (
+            {recentlyPlayed.slice(0, 6).map((track) => (
               <div
                 key={track.id}
                 onClick={() => playTrack(track, recentlyPlayed)}
-                className="w-44 shrink-0 cursor-pointer group p-3 rounded-2xl bg-aura-850/60 border border-aura-800 hover:border-aura-700 transition-all select-none"
+                className="w-36 shrink-0 cursor-pointer group select-none"
               >
                 <div className="aspect-square rounded-xl overflow-hidden mb-2.5 border border-white/5 relative">
                   <ArtworkImage src={track.coverUrl} alt={track.title} />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
                     <Play className="w-5 h-5 text-white fill-current" />
                   </div>
                 </div>
-                <h5 className="font-serif text-sm text-aura-100 truncate group-hover:text-aura-accent">
+                <h5 className="font-sans text-xs font-semibold text-aura-100 truncate group-hover:text-aura-accent transition-colors">
                   {track.title}
                 </h5>
-                <p className="text-[11px] text-aura-400 truncate mt-0.5">{track.artist}</p>
+                <p className="text-[10px] font-mono text-aura-400 truncate mt-0.5">{track.artist}</p>
               </div>
             ))}
           </div>
@@ -247,7 +247,7 @@ export const HomePage: React.FC = () => {
           subtitle="A selection of high-fidelity tracks holding enduring acoustic value."
         />
 
-        <div className="p-2 rounded-2xl bg-aura-850/40 border border-aura-800/80 divide-y divide-aura-800/40">
+        <div className="divide-y divide-aura-800/45 pt-1">
           {isLoading ? (
             <>
               <TrackRowSkeleton />

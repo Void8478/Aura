@@ -98,7 +98,7 @@ export const FavoritesPage: React.FC = () => {
               description="Save tracks by clicking the heart icon on any composition grid or listing."
             />
           ) : (
-            <div className="p-2 rounded-2xl bg-aura-850/40 border border-aura-800 divide-y divide-aura-800/40">
+            <div className="divide-y divide-aura-800/45 pt-1">
               {favoriteTracks.map((track, idx) => (
                 <TrackRow
                   key={track.id}
