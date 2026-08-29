@@ -283,7 +283,7 @@ export const RootLayout: React.FC = () => {
         )}
 
         {/* Main Content Area Container */}
-        <div className="flex-1 flex flex-col relative z-10">
+        <div className="flex-1 flex flex-col relative z-10 pb-36 lg:pb-24">
           <Outlet />
         </div>
 

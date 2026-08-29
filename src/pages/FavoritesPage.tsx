@@ -51,7 +51,7 @@ export const FavoritesPage: React.FC = () => {
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex gap-2 border-b border-aura-800 pb-4 select-none">
+      <div className="flex gap-2 border-b border-aura-800 pb-4 select-none overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('tracks')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-mono border transition-all cursor-pointer ${

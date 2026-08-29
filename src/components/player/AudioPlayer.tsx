@@ -42,7 +42,7 @@ export const AudioPlayer: React.FC = () => {
   const isLiked = isFavorite(currentTrack.id);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-aura-950/95 backdrop-blur-md border-t border-aura-800/80 select-none shadow-aura-deck">
+    <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 z-40 bg-aura-950/95 backdrop-blur-md border-t border-aura-800/80 select-none shadow-aura-deck">
       {/* Top micro progress line for mobile */}
       <div className="md:hidden">
         <TrackProgress showTimestamps={false} className="h-0.5 gap-0 py-0" />
@@ -91,7 +91,7 @@ export const AudioPlayer: React.FC = () => {
         </div>
 
         {/* Center: Playback Controls & Progress (Desktop) */}
-        <div className="flex flex-col items-center gap-1.5 flex-1 max-w-xl">
+        <div className="hidden md:flex flex-col items-center gap-1.5 flex-1 max-w-xl">
           <div className="flex items-center gap-2 sm:gap-4">
             <TactileButton
               variant="ghost"
@@ -129,13 +129,13 @@ export const AudioPlayer: React.FC = () => {
           </div>
 
           {/* Desktop Track Progress bar */}
-          <div className="hidden md:flex w-full">
+          <div className="w-full">
             <TrackProgress showTimestamps={true} />
           </div>
         </div>
 
-        {/* Right: Visualizer, Volume, Queue & Deck triggers */}
-        <div className="flex items-center justify-end gap-1.5 sm:gap-3 md:w-72">
+        {/* Right: Visualizer, Volume, Queue & Deck triggers (Desktop) */}
+        <div className="hidden md:flex items-center justify-end gap-1.5 sm:gap-3 md:w-72">
           {/* Mini Real-Time Audio Visualizer trigger */}
           <button
             onClick={toggleVisualizer}
@@ -195,6 +195,39 @@ export const AudioPlayer: React.FC = () => {
           >
             <HelpCircle className="w-4 h-4" />
           </TactileButton>
+        </div>
+
+        {/* Mobile-Only Action controls (Visible on mobile, hidden on desktop) */}
+        <div className="flex md:hidden items-center gap-2 shrink-0">
+          <button
+            onClick={togglePlay}
+            className="w-10 h-10 rounded-full bg-aura-100 text-aura-950 flex items-center justify-center cursor-pointer shadow-xs active:scale-95 transition-transform"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-aura-950" />
+            ) : isPlaying ? (
+              <Pause className="w-4.5 h-4.5 fill-current" />
+            ) : (
+              <Play className="w-4.5 h-4.5 fill-current ml-0.5" />
+            )}
+          </button>
+
+          <button
+            onClick={next}
+            className="p-2 text-aura-300 hover:text-aura-100 cursor-pointer active:scale-90 transition-transform"
+            aria-label="Next track"
+          >
+            <SkipForward className="w-4.5 h-4.5" />
+          </button>
+
+          <button
+            onClick={toggleVisualizer}
+            className="p-2 text-aura-400 hover:text-aura-100 cursor-pointer"
+            aria-label="Open fullscreen deck"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
