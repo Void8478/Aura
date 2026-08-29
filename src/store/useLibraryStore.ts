@@ -15,9 +15,11 @@ interface LibraryStore {
   toggleFavorite: (id: string, item?: Track | Album | Artist) => void;
   isFavorite: (id: string) => boolean;
   createCrate: (title: string, description?: string, colorTag?: string) => Crate;
+  renameCrate: (crateId: string, title: string, description?: string) => void;
   deleteCrate: (crateId: string) => void;
   addTrackToCrate: (crateId: string, track: Track) => void;
   removeTrackFromCrate: (crateId: string, trackId: string) => void;
+  reorderCrateTracks: (crateId: string, startIndex: number, endIndex: number) => void;
   setTrackNote: (trackId: string, note: string) => void;
   addToRecentlyPlayed: (track: Track) => void;
   clearHistory: () => void;
@@ -180,6 +182,31 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     return newCrate;
   },
 
+  renameCrate: (crateId: string, title: string, description = '') => {
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
+    const updated = crates.map((c) => {
+      if (c.id === crateId) {
+        return {
+          ...c,
+          title,
+          description,
+        };
+      }
+      return c;
+    });
+
+    set({ crates: updated });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
+  },
+
   deleteCrate: (crateId: string) => {
     const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = crates.filter((c) => c.id !== crateId);
@@ -228,6 +255,33 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
         return {
           ...c,
           tracks: c.tracks.filter((t) => t.id !== trackId),
+        };
+      }
+      return c;
+    });
+
+    set({ crates: updated });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
+  },
+
+  reorderCrateTracks: (crateId: string, startIndex: number, endIndex: number) => {
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
+    const updated = crates.map((c) => {
+      if (c.id === crateId) {
+        const reordered = [...c.tracks];
+        const [removed] = reordered.splice(startIndex, 1);
+        reordered.splice(endIndex, 0, removed);
+        return {
+          ...c,
+          tracks: reordered,
         };
       }
       return c;
