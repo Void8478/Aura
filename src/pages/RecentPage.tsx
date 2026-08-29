@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { History, Trash2, Play } from 'lucide-react';
 import { useLibraryStore } from '../store/useLibraryStore';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -8,6 +8,10 @@ import { TactileButton } from '../components/ui/TactileButton';
 export const RecentPage: React.FC = () => {
   const { recentlyPlayed, clearHistory } = useLibraryStore();
   const { playTrack } = usePlayerStore();
+
+  useEffect(() => {
+    document.title = 'Recent — AURA';
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">

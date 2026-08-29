@@ -38,6 +38,7 @@ export const ArtistDetailPage: React.FC = () => {
 
         if (artistData) {
           setArtist(artistData);
+          document.title = `${artistData.name} — AURA`;
 
           // Fetch tracks by this artist's name
           const tracks = await searchTracks(artistData.name);

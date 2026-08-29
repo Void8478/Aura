@@ -34,6 +34,7 @@ export const ReleaseDetail: React.FC = () => {
         if (active) {
           if (data) {
             setAlbum(data);
+            document.title = `${data.title} — AURA`;
           } else {
             setHasError(true);
           }

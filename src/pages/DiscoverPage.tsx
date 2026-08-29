@@ -55,6 +55,7 @@ export const DiscoverPage: React.FC = () => {
   const [isFiltering, setIsFiltering] = useState(false);
 
   useEffect(() => {
+    document.title = 'Discover — AURA';
     let active = true;
 
     async function loadDiscoverContent() {

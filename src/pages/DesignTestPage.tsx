@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Play,
   Heart,
@@ -39,6 +39,10 @@ export const DesignTestPage: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [searchValue, setSearchValue] = useState('');
   const [isButtonLoading, setIsButtonLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Design System — AURA';
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 space-y-16">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FolderPlus,
@@ -21,6 +21,10 @@ export const UserLibrary: React.FC = () => {
   const navigate = useNavigate();
   const { crates, createCrate, renameCrate, deleteCrate } = useLibraryStore();
   const { playTrack } = usePlayerStore();
+
+  useEffect(() => {
+    document.title = 'Library — AURA';
+  }, []);
 
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);

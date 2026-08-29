@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Music, Disc, Compass } from 'lucide-react';
 import { useLibraryStore } from '../store/useLibraryStore';
@@ -14,6 +14,10 @@ export const FavoritesPage: React.FC = () => {
   const { favoriteTracks, favoriteAlbums, favoriteArtists } = useLibraryStore();
   const { playTrack } = usePlayerStore();
   const [activeTab, setActiveTab] = useState<'tracks' | 'albums' | 'artists'>('tracks');
+
+  useEffect(() => {
+    document.title = 'Favorites — AURA';
+  }, []);
 
   const handlePlayTracks = () => {
     if (favoriteTracks.length > 0) {

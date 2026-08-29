@@ -20,6 +20,7 @@ import { SearchPalette } from '../components/search/SearchPalette';
 import { KeyboardShortcutsModal } from '../components/common/KeyboardShortcutsModal';
 import { ToastContainer } from '../components/ui/Toast';
 import { VisualizerCanvas } from '../components/player/VisualizerCanvas';
+import { Logo } from '../components/brand/Logo';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -61,19 +62,7 @@ export const RootLayout: React.FC = () => {
       <aside className="hidden lg:flex flex-col w-64 bg-aura-950/80 border-r border-aura-800/80 shrink-0 h-screen sticky top-0 z-20 select-none">
         {/* Sidebar Header / Masthead */}
         <div className="p-6 border-b border-aura-800/50 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-lg bg-aura-800 border border-aura-700/80 flex items-center justify-center group-hover:border-aura-accent/60 transition-colors">
-              <span className="font-serif text-lg font-bold text-aura-accent">A</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-serif text-xl font-bold tracking-tight text-aura-100 group-hover:text-aura-accent transition-colors">
-                AURA
-              </span>
-              <span className="text-[9px] font-mono tracking-widest text-aura-500 uppercase -mt-0.5">
-                SONIC JOURNAL
-              </span>
-            </div>
-          </Link>
+          <Logo variant="horizontal" size="md" className="text-aura-100 font-semibold" />
         </div>
 
         {/* Sidebar Nav Area */}
@@ -211,12 +200,7 @@ export const RootLayout: React.FC = () => {
 
         {/* MOBILE COMPACT HEADER */}
         <header className="lg:hidden flex items-center justify-between px-4 h-16 bg-aura-900/90 backdrop-blur-md sticky top-0 z-20 border-b border-aura-800/80">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 rounded bg-aura-800 border border-aura-700 flex items-center justify-center">
-              <span className="font-serif text-sm font-bold text-aura-accent">A</span>
-            </div>
-            <span className="font-serif text-base font-bold text-aura-100">AURA</span>
-          </Link>
+          <Logo variant="horizontal" size="sm" className="text-aura-100 font-semibold" />
 
           <div className="flex items-center gap-2">
             <button

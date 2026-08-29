@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -32,6 +32,12 @@ export const PlaylistDetailPage: React.FC = () => {
   const { currentTrack, isPlaying, playTrack, toggleShuffle } = usePlayerStore();
 
   const crate = crates.find((c) => c.id === id);
+
+  useEffect(() => {
+    if (crate) {
+      document.title = `${crate.title} — AURA`;
+    }
+  }, [crate]);
 
   // Edit Crate Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);

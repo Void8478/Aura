@@ -51,6 +51,7 @@ export const SearchPage: React.FC = () => {
 
   // Hotkey listener: Ctrl/Cmd + K focuses search input
   useEffect(() => {
+    document.title = 'Search — AURA';
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();

@@ -39,6 +39,7 @@ export const HomePage: React.FC = () => {
   ];
 
   useEffect(() => {
+    document.title = 'AURA — Discover your next sound.';
     let active = true;
 
     async function loadHomeContent() {
