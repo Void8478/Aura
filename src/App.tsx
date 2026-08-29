@@ -1,16 +1,23 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { RootLayout } from './layouts/RootLayout';
-import { HomePage } from './pages/HomePage';
-import { DiscoverPage } from './pages/DiscoverPage';
-import { SearchPage } from './pages/SearchPage';
-import { LibraryPage } from './pages/LibraryPage';
-import { FavoritesPage } from './pages/FavoritesPage';
-import { RecentPage } from './pages/RecentPage';
-import { AboutPage } from './pages/AboutPage';
-import { AlbumDetailPage } from './pages/AlbumDetailPage';
-import { ArtistDetailPage } from './pages/ArtistDetailPage';
-import { PlaylistDetailPage } from './pages/PlaylistDetailPage';
-import { DesignTestPage } from './pages/DesignTestPage';
+
+// Lazy loaded page components
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const DiscoverPage = React.lazy(() => import('./pages/DiscoverPage'));
+const SearchPage = React.lazy(() => import('./pages/SearchPage'));
+const LibraryPage = React.lazy(() =>
+  import('./pages/LibraryPage').then((m) => ({ default: m.LibraryPage }))
+);
+const FavoritesPage = React.lazy(() => import('./pages/FavoritesPage'));
+const RecentPage = React.lazy(() => import('./pages/RecentPage'));
+const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+const AlbumDetailPage = React.lazy(() =>
+  import('./pages/AlbumDetailPage').then((m) => ({ default: m.AlbumDetailPage }))
+);
+const ArtistDetailPage = React.lazy(() => import('./pages/ArtistDetailPage'));
+const PlaylistDetailPage = React.lazy(() => import('./pages/PlaylistDetailPage'));
+const DesignTestPage = React.lazy(() => import('./pages/DesignTestPage'));
 
 export function App() {
   return (

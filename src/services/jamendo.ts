@@ -4,6 +4,23 @@ import { CURATED_TRACKS, CURATED_ALBUMS, MOCK_ARTISTS } from '../data/mockTracks
 const CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID || 'e7beea4a';
 const BASE_URL = 'https://api.jamendo.com/v3.0';
 
+// In-Memory API Cache to prevent redundant Jamendo network requests
+const apiCache = new Map<string, { data: any; expiry: number }>();
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache
+
+async function fetchJSON(url: string): Promise<any> {
+  const now = Date.now();
+  const cached = apiCache.get(url);
+  if (cached && cached.expiry > now) {
+    return cached.data;
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  const data = await res.json();
+  apiCache.set(url, { data, expiry: now + CACHE_DURATION_MS });
+  return data;
+}
+
 // Helper to map Jamendo genres to AURA genres
 function mapToAuraGenre(rawGenre?: string): Genre {
   if (!rawGenre) return 'Ambient';
@@ -82,10 +99,7 @@ export async function searchTracks(query: string): Promise<Track[]> {
       query
     )}&include=musicinfo+stats&audioformat=mp32`;
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) {
       return CURATED_TRACKS.filter(
         (t) =>
@@ -108,10 +122,7 @@ export async function searchTracks(query: string): Promise<Track[]> {
 export async function getFeaturedTracks(): Promise<Track[]> {
   try {
     const url = `${BASE_URL}/tracks/?client_id=${CLIENT_ID}&format=json&limit=10&featured=true&include=musicinfo+stats&audioformat=mp32`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) return CURATED_TRACKS;
 
     return data.results.map((item: any, idx: number) => normalizeTrack(item, idx));
@@ -124,10 +135,7 @@ export async function getFeaturedTracks(): Promise<Track[]> {
 export async function getPopularTracks(): Promise<Track[]> {
   try {
     const url = `${BASE_URL}/tracks/?client_id=${CLIENT_ID}&format=json&limit=15&order=popularity_month&include=musicinfo+stats&audioformat=mp32`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) return CURATED_TRACKS;
 
     return data.results.map((item: any, idx: number) => normalizeTrack(item, idx));
@@ -141,10 +149,7 @@ export async function getTracksByGenre(genre: Genre): Promise<Track[]> {
   try {
     const searchGenre = genre.toLowerCase().replace(/[^a-z]/g, '');
     const url = `${BASE_URL}/tracks/?client_id=${CLIENT_ID}&format=json&limit=15&tags=${searchGenre}&include=musicinfo+stats&audioformat=mp32`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) {
       return CURATED_TRACKS.filter((t) => t.genre === genre);
     }
@@ -163,10 +168,7 @@ export async function getArtist(id: string): Promise<Artist | null> {
   try {
     const cleanId = id.replace('artist-', '');
     const url = `${BASE_URL}/artists/?client_id=${CLIENT_ID}&format=json&id=${cleanId}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) return null;
 
     const artist = data.results[0];
@@ -190,22 +192,15 @@ export async function getAlbum(id: string): Promise<Album | null> {
   try {
     const cleanId = id.replace('album-', '');
     const url = `${BASE_URL}/albums/?client_id=${CLIENT_ID}&format=json&id=${cleanId}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-
-    const data = await res.json();
+    const data = await fetchJSON(url);
     if (!data.results || data.results.length === 0) return null;
 
     const album = data.results[0];
 
     // Fetch album tracks
     const tracksUrl = `${BASE_URL}/tracks/?client_id=${CLIENT_ID}&format=json&album_id=${album.id}&include=musicinfo`;
-    const tracksRes = await fetch(tracksUrl);
-    let tracks: Track[] = [];
-    if (tracksRes.ok) {
-      const tracksData = await tracksRes.json();
-      tracks = (tracksData.results || []).map((item: any, idx: number) => normalizeTrack(item, idx));
-    }
+    const tracksData = await fetchJSON(tracksUrl);
+    const tracks = (tracksData.results || []).map((item: any, idx: number) => normalizeTrack(item, idx));
 
     return {
       id: `album-${album.id}`,

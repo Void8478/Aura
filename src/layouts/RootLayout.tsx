@@ -284,7 +284,17 @@ export const RootLayout: React.FC = () => {
 
         {/* Main Content Area Container */}
         <div className="flex-1 flex flex-col relative z-10 pb-36 lg:pb-24">
-          <Outlet />
+          <React.Suspense
+            fallback={
+              <div className="flex-1 flex items-center justify-center min-h-[30vh]">
+                <span className="text-xs font-mono text-aura-500 animate-pulse uppercase tracking-wider">
+                  Loading sonic archive...
+                </span>
+              </div>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
         </div>
 
         {/* MOBILE BOTTOM NAVIGATION BAR */}
