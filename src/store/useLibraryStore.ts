@@ -1,16 +1,19 @@
 import { create } from 'zustand';
-import type { Track, Crate } from '../types/music';
-import { CURATED_TRACKS } from '../services/mockCatalog';
+import type { Track, Album, Artist, Crate } from '../types/music';
+import { CURATED_TRACKS, CURATED_ALBUMS, MOCK_ARTISTS } from '../data/mockTracks';
 
 interface LibraryStore {
-  favorites: string[];
+  favorites: string[]; // holds all favorited IDs (compatibility)
+  favoriteTracks: Track[];
+  favoriteAlbums: Album[];
+  favoriteArtists: Artist[];
   crates: Crate[];
   recentlyPlayed: Track[];
   trackNotes: Record<string, string>;
 
   // Actions
-  toggleFavorite: (trackId: string) => void;
-  isFavorite: (trackId: string) => boolean;
+  toggleFavorite: (id: string, item?: Track | Album | Artist) => void;
+  isFavorite: (id: string) => boolean;
   createCrate: (title: string, description?: string, colorTag?: string) => Crate;
   deleteCrate: (crateId: string) => void;
   addTrackToCrate: (crateId: string, track: Track) => void;
@@ -20,7 +23,7 @@ interface LibraryStore {
   clearHistory: () => void;
 }
 
-const STORAGE_KEY = 'aura_library_v1';
+const STORAGE_KEY = 'aura_library_v2';
 
 const INITIAL_CRATES: Crate[] = [
   {
@@ -29,42 +32,43 @@ const INITIAL_CRATES: Crate[] = [
     description: 'Analog synthesizers, rain-slicked windshields, and long highway journeys.',
     createdAt: '2025-01-10',
     colorTag: '#e07a5f',
-    tracks: [CURATED_TRACKS[0], CURATED_TRACKS[4], CURATED_TRACKS[8]],
+    tracks: [CURATED_TRACKS[0], CURATED_TRACKS[4], CURATED_TRACKS[2]],
     coverUrl: CURATED_TRACKS[4].coverUrl,
-  },
-  {
-    id: 'crate-focus',
-    title: 'Felt Pianos & Heavy Focus',
-    description: 'Acoustic minimalism for code architectures and deep writing sessions.',
-    createdAt: '2025-02-01',
-    colorTag: '#d4a373',
-    tracks: [CURATED_TRACKS[1], CURATED_TRACKS[6], CURATED_TRACKS[2]],
-    coverUrl: CURATED_TRACKS[1].coverUrl,
   },
 ];
 
-function loadSavedLibrary(): {
-  favorites: string[];
-  crates: Crate[];
-  trackNotes: Record<string, string>;
-} {
+function loadSavedLibrary() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       return {
-        favorites: ['aura-01', 'aura-03', 'aura-05'],
+        favorites: [],
+        favoriteTracks: [],
+        favoriteAlbums: [],
+        favoriteArtists: [],
         crates: INITIAL_CRATES,
-        trackNotes: {
-          'aura-01': 'Sublime tape decay. Perfect for late evening code reviews.',
-          'aura-03': 'The sub-bass vibration in the second half is extraordinary.',
-        },
+        recentlyPlayed: [],
+        trackNotes: {},
       };
     }
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    return {
+      favorites: data.favorites || [],
+      favoriteTracks: data.favoriteTracks || [],
+      favoriteAlbums: data.favoriteAlbums || [],
+      favoriteArtists: data.favoriteArtists || [],
+      crates: data.crates || INITIAL_CRATES,
+      recentlyPlayed: data.recentlyPlayed || [],
+      trackNotes: data.trackNotes || {},
+    };
   } catch {
     return {
-      favorites: ['aura-01', 'aura-03'],
+      favorites: [],
+      favoriteTracks: [],
+      favoriteAlbums: [],
+      favoriteArtists: [],
       crates: INITIAL_CRATES,
+      recentlyPlayed: [],
       trackNotes: {},
     };
   }
@@ -72,7 +76,11 @@ function loadSavedLibrary(): {
 
 function saveLibrary(data: {
   favorites: string[];
+  favoriteTracks: Track[];
+  favoriteAlbums: Album[];
+  favoriteArtists: Artist[];
   crates: Crate[];
+  recentlyPlayed: Track[];
   trackNotes: Record<string, string>;
 }) {
   try {
@@ -86,21 +94,65 @@ const saved = loadSavedLibrary();
 
 export const useLibraryStore = create<LibraryStore>((set, get) => ({
   favorites: saved.favorites,
+  favoriteTracks: saved.favoriteTracks,
+  favoriteAlbums: saved.favoriteAlbums,
+  favoriteArtists: saved.favoriteArtists,
   crates: saved.crates,
-  recentlyPlayed: [CURATED_TRACKS[0], CURATED_TRACKS[1], CURATED_TRACKS[4]],
+  recentlyPlayed: saved.recentlyPlayed,
   trackNotes: saved.trackNotes,
 
-  toggleFavorite: (trackId: string) => {
-    const { favorites, crates, trackNotes } = get();
-    const exists = favorites.includes(trackId);
-    const updated = exists ? favorites.filter((id) => id !== trackId) : [...favorites, trackId];
+  toggleFavorite: (id: string, item?: Track | Album | Artist) => {
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
+    const exists = favorites.includes(id);
 
-    set({ favorites: updated });
-    saveLibrary({ favorites: updated, crates, trackNotes });
+    let updatedFavorites = [...favorites];
+    let updatedTracks = [...favoriteTracks];
+    let updatedAlbums = [...favoriteAlbums];
+    let updatedArtists = [...favoriteArtists];
+
+    if (exists) {
+      updatedFavorites = favorites.filter((fid) => fid !== id);
+      if (id.startsWith('jamendo-') || id.startsWith('aura-')) {
+        updatedTracks = favoriteTracks.filter((t) => t.id !== id);
+      } else if (id.startsWith('album-')) {
+        updatedAlbums = favoriteAlbums.filter((a) => a.id !== id);
+      } else if (id.startsWith('artist-')) {
+        updatedArtists = favoriteArtists.filter((a) => a.id !== id);
+      }
+    } else {
+      updatedFavorites.push(id);
+      if (id.startsWith('jamendo-') || id.startsWith('aura-')) {
+        const trackObj = (item as Track) || CURATED_TRACKS.find((t) => t.id === id);
+        if (trackObj) updatedTracks.push(trackObj);
+      } else if (id.startsWith('album-')) {
+        const albumObj = (item as Album) || CURATED_ALBUMS.find((a) => a.id === id);
+        if (albumObj) updatedAlbums.push(albumObj);
+      } else if (id.startsWith('artist-')) {
+        const artistObj = (item as Artist) || MOCK_ARTISTS.find((a) => a.id === id);
+        if (artistObj) updatedArtists.push(artistObj);
+      }
+    }
+
+    set({
+      favorites: updatedFavorites,
+      favoriteTracks: updatedTracks,
+      favoriteAlbums: updatedAlbums,
+      favoriteArtists: updatedArtists,
+    });
+
+    saveLibrary({
+      favorites: updatedFavorites,
+      favoriteTracks: updatedTracks,
+      favoriteAlbums: updatedAlbums,
+      favoriteArtists: updatedArtists,
+      crates,
+      recentlyPlayed,
+      trackNotes,
+    });
   },
 
-  isFavorite: (trackId: string) => {
-    return get().favorites.includes(trackId);
+  isFavorite: (id: string) => {
+    return get().favorites.includes(id);
   },
 
   createCrate: (title: string, description = '', colorTag = '#e07a5f') => {
@@ -113,22 +165,38 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
       tracks: [],
     };
 
-    const { favorites, crates, trackNotes } = get();
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = [newCrate, ...crates];
     set({ crates: updated });
-    saveLibrary({ favorites, crates: updated, trackNotes });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
     return newCrate;
   },
 
   deleteCrate: (crateId: string) => {
-    const { favorites, crates, trackNotes } = get();
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = crates.filter((c) => c.id !== crateId);
     set({ crates: updated });
-    saveLibrary({ favorites, crates: updated, trackNotes });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
   },
 
   addTrackToCrate: (crateId: string, track: Track) => {
-    const { favorites, crates, trackNotes } = get();
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = crates.map((c) => {
       if (c.id === crateId) {
         if (c.tracks.some((t) => t.id === track.id)) return c;
@@ -142,11 +210,19 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     });
 
     set({ crates: updated });
-    saveLibrary({ favorites, crates: updated, trackNotes });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
   },
 
   removeTrackFromCrate: (crateId: string, trackId: string) => {
-    const { favorites, crates, trackNotes } = get();
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = crates.map((c) => {
       if (c.id === crateId) {
         return {
@@ -158,26 +234,60 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     });
 
     set({ crates: updated });
-    saveLibrary({ favorites, crates: updated, trackNotes });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates: updated,
+      recentlyPlayed,
+      trackNotes,
+    });
   },
 
   setTrackNote: (trackId: string, note: string) => {
-    const { favorites, crates, trackNotes } = get();
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
     const updated = { ...trackNotes, [trackId]: note };
     set({ trackNotes: updated });
-    saveLibrary({ favorites, crates, trackNotes: updated });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates,
+      recentlyPlayed,
+      trackNotes: updated,
+    });
   },
 
   addToRecentlyPlayed: (track: Track) => {
-    set((state) => {
-      const filtered = state.recentlyPlayed.filter((t) => t.id !== track.id);
-      return {
-        recentlyPlayed: [track, ...filtered].slice(0, 30),
-      };
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, recentlyPlayed, trackNotes } = get();
+    const filtered = recentlyPlayed.filter((t) => t.id !== track.id);
+    const updated = [track, ...filtered].slice(0, 50);
+
+    set({ recentlyPlayed: updated });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates,
+      recentlyPlayed: updated,
+      trackNotes,
     });
   },
 
   clearHistory: () => {
+    const { favorites, favoriteTracks, favoriteAlbums, favoriteArtists, crates, trackNotes } = get();
     set({ recentlyPlayed: [] });
+    saveLibrary({
+      favorites,
+      favoriteTracks,
+      favoriteAlbums,
+      favoriteArtists,
+      crates,
+      recentlyPlayed: [],
+      trackNotes,
+    });
   },
 }));

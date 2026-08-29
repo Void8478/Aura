@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { Track, RepeatMode } from '../types/music';
 import { CURATED_TRACKS } from '../services/mockCatalog';
 import { audioService } from '../services/audioService';
+import { useLibraryStore } from './useLibraryStore';
+
 
 interface PlayerStore {
   // State variables
@@ -160,6 +162,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => {
       });
 
       saveQueueToStorage(updatedQueue);
+      useLibraryStore.getState().addToRecentlyPlayed(track);
       audioService.loadAndPlay(track.audioUrl, 0);
     },
 
