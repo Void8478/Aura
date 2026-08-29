@@ -32,11 +32,11 @@ export const ExpandedPlayerModal: React.FC = () => {
     currentTrack,
     isPlaying,
     togglePlay,
-    nextTrack,
-    prevTrack,
-    repeatMode,
-    cycleRepeatMode,
-    isShuffled,
+    next,
+    previous,
+    repeat,
+    toggleRepeat,
+    shuffle,
     toggleShuffle,
   } = usePlayerStore();
 
@@ -74,36 +74,40 @@ export const ExpandedPlayerModal: React.FC = () => {
   return (
     <AnimatePresence>
       {isVisualizerExpanded && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 overflow-hidden select-none">
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsVisualizerExpanded(false)}
-            className="fixed inset-0 bg-aura-950/95 backdrop-blur-md"
+            className="fixed inset-0 bg-aura-950/98 backdrop-blur-lg"
           />
 
+          {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.98, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-5xl bg-aura-900 border-0 md:border md:border-aura-700/80 md:rounded-3xl shadow-aura-deck flex flex-col overflow-hidden z-10"
+            exit={{ opacity: 0, scale: 0.98, y: 30 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full h-full md:h-auto md:max-h-[92vh] md:max-w-4xl bg-aura-900 border-0 md:border md:border-aura-800 md:rounded-3xl shadow-aura-deck flex flex-col overflow-hidden z-10"
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-aura-800/80 bg-aura-950/60">
               <div className="flex items-center gap-3">
-                <span className="w-2.5 h-2.5 rounded-full bg-aura-accent animate-pulse" />
-                <span className="font-mono text-xs uppercase tracking-widest text-aura-400">
-                  AURA MASTER AUDIO DECK — HI-RES ANALOG EMULATION
+                <span className="w-2 h-2 rounded-full bg-aura-accent" />
+                <span className="font-mono text-[10px] uppercase tracking-widest text-aura-400">
+                  Tactile Audio Deck
                 </span>
               </div>
 
+              {/* Tabs (Desktop) */}
               <div className="hidden sm:flex items-center gap-1 bg-aura-900 p-1 rounded-lg border border-aura-800">
                 <button
                   onClick={() => setActiveTab('deck')}
-                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium ${
+                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium cursor-pointer ${
                     activeTab === 'deck'
-                      ? 'bg-aura-800 text-aura-100 shadow-sm border border-aura-700'
+                      ? 'bg-aura-800 text-aura-100 border border-aura-700 shadow-xs'
                       : 'text-aura-400 hover:text-aura-200'
                   }`}
                 >
@@ -112,9 +116,9 @@ export const ExpandedPlayerModal: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('notes')}
-                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium ${
+                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium cursor-pointer ${
                     activeTab === 'notes'
-                      ? 'bg-aura-800 text-aura-100 shadow-sm border border-aura-700'
+                      ? 'bg-aura-800 text-aura-100 border border-aura-700 shadow-xs'
                       : 'text-aura-400 hover:text-aura-200'
                   }`}
                 >
@@ -123,14 +127,14 @@ export const ExpandedPlayerModal: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab('specs')}
-                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium ${
+                  className={`px-3 py-1 text-xs rounded-md transition-all font-medium cursor-pointer ${
                     activeTab === 'specs'
-                      ? 'bg-aura-800 text-aura-100 shadow-sm border border-aura-700'
+                      ? 'bg-aura-800 text-aura-100 border border-aura-700 shadow-xs'
                       : 'text-aura-400 hover:text-aura-200'
                   }`}
                 >
                   <Sliders className="w-3.5 h-3.5 inline mr-1.5" />
-                  Sonic Specs
+                  Specs
                 </button>
               </div>
 
@@ -148,20 +152,22 @@ export const ExpandedPlayerModal: React.FC = () => {
                   size="icon-sm"
                   onClick={() => setIsVisualizerExpanded(false)}
                   aria-label="Close expanded deck"
+                  className="hover:bg-aura-800"
                 >
                   <X className="w-4 h-4" />
                 </TactileButton>
               </div>
             </div>
 
+            {/* Tabs (Mobile Navigation) */}
             <div className="flex sm:hidden border-b border-aura-800 bg-aura-900/80 px-4 py-2 gap-2">
               {(['deck', 'notes', 'specs'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-1.5 text-xs rounded-md font-medium capitalize ${
+                  className={`flex-1 py-1.5 text-xs rounded-md font-medium capitalize cursor-pointer ${
                     activeTab === tab
-                      ? 'bg-aura-800 text-aura-100 border border-aura-700'
+                      ? 'bg-aura-800 text-aura-100 border border-aura-700 shadow-xs'
                       : 'text-aura-400'
                   }`}
                 >
@@ -170,59 +176,33 @@ export const ExpandedPlayerModal: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+            {/* Tab Contents */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-10">
               {activeTab === 'deck' && (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center h-full">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center h-full">
+                  {/* Left Column: Artwork (Framer Motion Continuous Transition) */}
                   <div className="md:col-span-6 flex flex-col items-center justify-center relative">
-                    <div className="relative w-64 h-64 sm:w-80 sm:h-80 max-w-full flex items-center justify-center">
+                    <div className="w-64 h-64 sm:w-80 sm:h-80 max-w-full flex items-center justify-center">
                       <motion.div
-                        animate={{
-                          rotate: isPlaying ? 360 : 0,
-                          x: 28,
-                        }}
-                        transition={{
-                          rotate: {
-                            repeat: Infinity,
-                            duration: 12,
-                            ease: 'linear',
-                          },
-                          x: { duration: 0.4 },
-                        }}
-                        className="absolute w-56 h-56 sm:w-72 sm:h-72 rounded-full bg-[#111115] border-4 border-[#1c1c24] shadow-2xl flex items-center justify-center overflow-hidden"
+                        layoutId="player-artwork"
+                        className="w-full h-full rounded-3xl shadow-aura-deck overflow-hidden border border-white/10"
                       >
-                        <div className="absolute inset-2 rounded-full border border-white/5" />
-                        <div className="absolute inset-6 rounded-full border border-white/5" />
-                        <div className="absolute inset-10 rounded-full border border-white/5" />
-                        <div className="absolute inset-14 rounded-full border border-white/5" />
-                        <div className="absolute inset-18 rounded-full border border-white/5" />
-
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-aura-accent/90 border-2 border-aura-900 flex flex-col items-center justify-center p-2 text-center select-none shadow-inner">
-                          <span className="text-[8px] font-mono uppercase text-white/80 tracking-widest">
-                            AURA 33 RPM
-                          </span>
-                          <span className="text-[10px] font-serif text-white font-bold leading-tight line-clamp-1">
-                            {currentTrack.album}
-                          </span>
-                          <div className="w-2 h-2 rounded-full bg-aura-950 mt-1" />
-                        </div>
-                      </motion.div>
-
-                      <div className="relative z-10 w-56 h-56 sm:w-72 sm:h-72 rounded-2xl shadow-aura-deck overflow-hidden border border-white/10">
                         <ArtworkImage
                           src={currentTrack.coverUrl}
                           alt={currentTrack.title}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </motion.div>
                     </div>
 
-                    <div className="mt-8 w-full max-w-sm flex flex-col items-center bg-aura-950/60 p-3.5 rounded-2xl border border-aura-800/80">
+                    {/* Minimal FFT Visualizer Canvas */}
+                    <div className="mt-8 w-full max-w-sm flex flex-col items-center bg-aura-950/40 p-4 rounded-2xl border border-aura-800/85">
                       <div className="flex items-center justify-between w-full mb-2 px-1">
-                        <span className="text-[10px] font-mono text-aura-500 uppercase tracking-wider">
-                          Real-time FFT Spectrum
+                        <span className="text-[9px] font-mono text-aura-500 uppercase tracking-wider">
+                          Real-time Spectrum
                         </span>
-                        <span className="text-[10px] font-mono text-aura-accent">
-                          {isPlaying ? 'Live Stream Active' : 'Suspended'}
+                        <span className="text-[9px] font-mono text-aura-accent">
+                          {isPlaying ? 'Live Emulation' : 'Suspended'}
                         </span>
                       </div>
                       <VisualizerCanvas
@@ -230,46 +210,48 @@ export const ExpandedPlayerModal: React.FC = () => {
                         height={40}
                         width={280}
                         barColor="#e07a5f"
-                        className="w-full"
+                        className="w-full opacity-80"
                       />
                     </div>
                   </div>
 
+                  {/* Right Column: Track Details & Controls */}
                   <div className="md:col-span-6 flex flex-col justify-between space-y-6">
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex flex-wrap gap-2 mb-3">
                         <Badge variant="accent">{currentTrack.genre}</Badge>
                         <Badge variant="amber">{currentTrack.mood}</Badge>
-                        {currentTrack.bpm && <Badge variant="mono">{formatBpm(currentTrack.bpm)}</Badge>}
+                        {currentTrack.bpm && <Badge variant="mono">{formatBpm(currentTrack.bpm)} BPM</Badge>}
                       </div>
 
-                      <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-aura-100 font-medium leading-tight">
+                      <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-aura-100 font-normal leading-tight">
                         {currentTrack.title}
                       </h2>
                       <p className="text-base sm:text-lg text-aura-400 mt-1.5 font-sans">
                         {currentTrack.artist}
                       </p>
-                      <p className="text-xs text-aura-500 mt-0.5 font-mono">
-                        From the album: <span className="text-aura-300">{currentTrack.album}</span>
+                      <p className="text-xs text-aura-500 mt-1 font-mono">
+                        Source: <span className="text-aura-350">{currentTrack.album}</span>
                       </p>
 
                       {currentTrack.storyQuote && (
-                        <div className="mt-6 p-4 rounded-xl bg-aura-850/60 border border-aura-800 text-sm text-aura-300 italic font-serif leading-relaxed">
+                        <div className="mt-6 p-4 rounded-2xl bg-aura-850/60 border border-aura-800 text-xs text-aura-300 italic font-serif leading-relaxed">
                           {currentTrack.storyQuote}
                         </div>
                       )}
                     </div>
 
+                    {/* Progress Slider & Controls */}
                     <div className="space-y-4 pt-4 border-t border-aura-800/60">
                       <TrackProgress showTimestamps={true} />
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <TactileButton
                             variant="ghost"
                             size="icon-sm"
                             onClick={toggleShuffle}
-                            active={isShuffled}
+                            active={shuffle}
                             aria-label="Toggle shuffle"
                           >
                             <Shuffle className="w-4 h-4" />
@@ -277,8 +259,8 @@ export const ExpandedPlayerModal: React.FC = () => {
                           <TactileButton
                             variant="ghost"
                             size="icon-sm"
-                            onClick={cycleRepeatMode}
-                            active={repeatMode !== 'off'}
+                            onClick={toggleRepeat}
+                            active={repeat !== 'off'}
                             aria-label="Cycle repeat mode"
                           >
                             <Repeat className="w-4 h-4" />
@@ -289,10 +271,10 @@ export const ExpandedPlayerModal: React.FC = () => {
                           <TactileButton
                             variant="secondary"
                             size="icon-md"
-                            onClick={prevTrack}
+                            onClick={previous}
                             aria-label="Previous track"
                           >
-                            <SkipBack className="w-4 h-4" />
+                            <SkipBack className="w-4 h-4 text-aura-300" />
                           </TactileButton>
 
                           <TactileButton
@@ -300,22 +282,22 @@ export const ExpandedPlayerModal: React.FC = () => {
                             size="icon-lg"
                             onClick={togglePlay}
                             aria-label={isPlaying ? 'Pause' : 'Play'}
-                            className="bg-aura-100 text-aura-950 hover:bg-white"
+                            className="bg-aura-100 text-aura-950 hover:bg-white w-12 h-12 rounded-full"
                           >
                             {isPlaying ? (
-                              <Pause className="w-6 h-6 fill-current" />
+                              <Pause className="w-5 h-5 fill-current" />
                             ) : (
-                              <Play className="w-6 h-6 fill-current ml-0.5" />
+                              <Play className="w-5 h-5 fill-current ml-0.5" />
                             )}
                           </TactileButton>
 
                           <TactileButton
                             variant="secondary"
                             size="icon-md"
-                            onClick={nextTrack}
+                            onClick={next}
                             aria-label="Next track"
                           >
-                            <SkipForward className="w-4 h-4" />
+                            <SkipForward className="w-4 h-4 text-aura-300" />
                           </TactileButton>
                         </div>
 
@@ -323,7 +305,7 @@ export const ExpandedPlayerModal: React.FC = () => {
                           <TactileButton
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => toggleFavorite(currentTrack.id)}
+                            onClick={() => toggleFavorite(currentTrack.id, currentTrack)}
                             aria-label="Favorite track"
                             className={isLiked ? 'text-aura-accent hover:text-aura-accent' : ''}
                           >
@@ -341,31 +323,31 @@ export const ExpandedPlayerModal: React.FC = () => {
               )}
 
               {activeTab === 'notes' && (
-                <div className="max-w-3xl mx-auto space-y-8">
+                <div className="max-w-2xl mx-auto space-y-8">
                   <div>
-                    <span className="text-xs font-mono uppercase tracking-wider text-aura-accent">
-                      Curator Commentary & Field Recordings
+                    <span className="text-xs font-mono uppercase tracking-wider text-aura-accent font-medium">
+                      Curator Dispatch Liner Notes
                     </span>
                     <h3 className="font-serif text-2xl text-aura-100 mt-1">
-                      {currentTrack.title} — Liner Notes
+                      {currentTrack.title}
                     </h3>
                   </div>
 
-                  <div className="prose prose-invert max-w-none text-aura-300 font-sans leading-relaxed space-y-4">
-                    <p className="text-base text-aura-200">
+                  <div className="text-aura-300 font-sans leading-relaxed space-y-4">
+                    <p className="text-sm sm:text-base text-aura-205">
                       {currentTrack.curatorNote ||
-                        'Recorded with intimate mic placement to preserve natural wooden harmonics and ambient acoustic space.'}
+                        'Recorded with close mic placements to preserve woody harmonics and natural room dynamics.'}
                     </p>
 
                     <div className="p-5 rounded-2xl bg-aura-850 border border-aura-800">
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-aura-400 mb-2">
-                        Author Statement
-                      </h4>
-                      <p className="italic font-serif text-aura-300 text-base">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-aura-400 block mb-2">
+                        Composer Vision Statement
+                      </span>
+                      <p className="italic font-serif text-aura-300 text-sm">
                         {currentTrack.storyQuote ||
-                          '“Music composed in stillness, holding back excess so every frequency counts.”'}
+                          '“Conceived in isolation, exploring the threshold where sound merges with ambient stillness.”'}
                       </p>
-                      <span className="block mt-2 text-xs font-mono text-aura-500">
+                      <span className="block mt-2 text-[10px] font-mono text-aura-500">
                         — {currentTrack.artist}
                       </span>
                     </div>
@@ -374,21 +356,21 @@ export const ExpandedPlayerModal: React.FC = () => {
                   <div className="p-6 rounded-2xl bg-aura-950/80 border border-aura-800 space-y-3">
                     <div className="flex items-center justify-between">
                       <label htmlFor="user-note" className="text-xs font-mono uppercase text-aura-300 font-medium">
-                        Your Personal Listening Journal
+                        Sonic Journal Notes
                       </label>
-                      <span className="text-[10px] text-aura-500">Saved locally</span>
+                      <span className="text-[9px] font-mono text-aura-500">Saved locally</span>
                     </div>
                     <textarea
                       id="user-note"
                       rows={3}
                       value={userNote}
                       onChange={(e) => setUserNote(e.target.value)}
-                      placeholder="Add personal notes, reflections, or where you were when you heard this..."
-                      className="w-full bg-aura-900 border border-aura-700/80 rounded-xl p-3 text-sm text-aura-200 placeholder:text-aura-600 focus:outline-none focus:border-aura-accent"
+                      placeholder="Add listening notes, details, reflections, or local tape contexts..."
+                      className="w-full bg-aura-900 border border-aura-700/80 rounded-xl p-3 text-sm text-aura-200 placeholder:text-aura-600 focus:outline-none focus:border-aura-accent resize-none font-sans"
                     />
                     <div className="flex justify-end">
                       <TactileButton variant="secondary" size="sm" onClick={handleSaveNote}>
-                        Save to Crate Archive
+                        Save to Repository
                       </TactileButton>
                     </div>
                   </div>
@@ -396,47 +378,47 @@ export const ExpandedPlayerModal: React.FC = () => {
               )}
 
               {activeTab === 'specs' && (
-                <div className="max-w-3xl mx-auto space-y-6">
+                <div className="max-w-2xl mx-auto space-y-6">
                   <div>
                     <span className="text-xs font-mono uppercase tracking-wider text-aura-amber">
-                      Acoustic Topology & Technical Telemetry
+                      Audio Telemetry
                     </span>
                     <h3 className="font-serif text-2xl text-aura-100 mt-1">
-                      Audio Engineering Specifications
+                      Sonic Specifications
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">Tempo</span>
-                      <p className="text-lg font-mono text-aura-100 mt-1">{formatBpm(currentTrack.bpm)}</p>
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Tempo</span>
+                      <p className="text-lg font-mono text-aura-100 mt-1">{formatBpm(currentTrack.bpm)} BPM</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">Harmonic Key</span>
-                      <p className="text-lg font-mono text-aura-100 mt-1">{currentTrack.musicalKey || 'A Minor'}</p>
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Musical Scale</span>
+                      <p className="text-lg font-mono text-aura-100 mt-1">{currentTrack.musicalKey || 'D Minor'}</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">Release Date</span>
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Dispatch Date</span>
                       <p className="text-lg font-mono text-aura-100 mt-1">{formatDate(currentTrack.releaseDate)}</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">Stream Encoding</span>
-                      <p className="text-lg font-mono text-aura-100 mt-1">MPEG-4 AAC / 320 kbps</p>
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Stream Bitrate</span>
+                      <p className="text-lg font-mono text-aura-100 mt-1">AAC / 320 kbps</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">License</span>
-                      <p className="text-sm font-mono text-aura-200 mt-1">{currentTrack.license || 'Creative Commons'}</p>
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Acoustic Mode</span>
+                      <p className="text-sm font-mono text-aura-200 mt-1">Free Creative Commons</p>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-aura-850 border border-aura-800">
-                      <span className="text-[11px] font-mono text-aura-500 uppercase">Tags</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                    <div className="p-4 rounded-2xl bg-aura-850 border border-aura-800">
+                      <span className="text-[10px] font-mono text-aura-500 uppercase">Descriptors</span>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
                         {currentTrack.tags.map((tag) => (
-                          <span key={tag} className="text-[10px] bg-aura-800 text-aura-300 px-1.5 py-0.5 rounded">
+                          <span key={tag} className="text-[9px] font-mono bg-aura-800 text-aura-350 px-2 py-0.5 rounded-md">
                             {tag}
                           </span>
                         ))}
@@ -450,7 +432,7 @@ export const ExpandedPlayerModal: React.FC = () => {
             {showCopied && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-aura-100 text-aura-950 font-mono text-xs px-4 py-2 rounded-full shadow-lg border border-white/20 z-30 flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-aura-accent" />
-                Track dispatch link copied to clipboard
+                Dispatch link copied
               </div>
             )}
           </motion.div>
@@ -459,3 +441,5 @@ export const ExpandedPlayerModal: React.FC = () => {
     </AnimatePresence>
   );
 };
+
+export default ExpandedPlayerModal;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -25,9 +26,9 @@ export const AudioPlayer: React.FC = () => {
     isPlaying,
     isLoading,
     togglePlay,
-    nextTrack,
-    prevTrack,
-    toggleQueue,
+    next,
+    previous,
+    setIsQueueOpen,
     isQueueOpen,
     toggleVisualizer,
     setIsShortcutsOpen,
@@ -41,10 +42,10 @@ export const AudioPlayer: React.FC = () => {
   const isLiked = isFavorite(currentTrack.id);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-aura-950/95 backdrop-blur-md border-t border-aura-800/80 select-none">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-aura-950/95 backdrop-blur-md border-t border-aura-800/80 select-none shadow-aura-deck">
       {/* Top micro progress line for mobile */}
       <div className="md:hidden">
-        <TrackProgress showTimestamps={false} className="h-1 gap-0 py-0" />
+        <TrackProgress showTimestamps={false} className="h-0.5 gap-0 py-0" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 sm:h-22 flex items-center justify-between gap-4">
@@ -52,10 +53,12 @@ export const AudioPlayer: React.FC = () => {
         <div className="flex items-center gap-3.5 min-w-0 flex-1 md:flex-initial md:w-72">
           <div
             onClick={toggleVisualizer}
-            className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden cursor-pointer group shadow-sm shrink-0 border border-white/10"
+            className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden cursor-pointer group shadow-xs shrink-0 border border-white/10"
             title="Click to open Master Deck & Liner Notes"
           >
-            <ArtworkImage src={currentTrack.coverUrl} alt={currentTrack.title} />
+            <motion.div layoutId="player-artwork" className="w-full h-full">
+              <ArtworkImage src={currentTrack.coverUrl} alt={currentTrack.title} />
+            </motion.div>
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
               <Maximize2 className="w-4 h-4 text-white" />
             </div>
@@ -64,7 +67,7 @@ export const AudioPlayer: React.FC = () => {
           <div className="min-w-0 flex-1">
             <button
               onClick={toggleVisualizer}
-              className="text-left w-full truncate block"
+              className="text-left w-full truncate block cursor-pointer"
               title={currentTrack.title}
             >
               <h4 className="text-sm font-medium text-aura-100 truncate hover:text-aura-accent transition-colors">
@@ -79,7 +82,7 @@ export const AudioPlayer: React.FC = () => {
           <TactileButton
             variant="ghost"
             size="icon-sm"
-            onClick={() => toggleFavorite(currentTrack.id)}
+            onClick={() => toggleFavorite(currentTrack.id, currentTrack)}
             aria-label="Favorite track"
             className={`hidden sm:flex shrink-0 ${isLiked ? 'text-aura-accent' : 'text-aura-500'}`}
           >
@@ -93,7 +96,7 @@ export const AudioPlayer: React.FC = () => {
             <TactileButton
               variant="ghost"
               size="icon-sm"
-              onClick={prevTrack}
+              onClick={previous}
               aria-label="Previous track (P)"
             >
               <SkipBack className="w-4 h-4 text-aura-300" />
@@ -118,7 +121,7 @@ export const AudioPlayer: React.FC = () => {
             <TactileButton
               variant="ghost"
               size="icon-sm"
-              onClick={nextTrack}
+              onClick={next}
               aria-label="Next track (N)"
             >
               <SkipForward className="w-4 h-4 text-aura-300" />
@@ -136,7 +139,7 @@ export const AudioPlayer: React.FC = () => {
           {/* Mini Real-Time Audio Visualizer trigger */}
           <button
             onClick={toggleVisualizer}
-            className="hidden lg:flex items-center gap-2 px-2 py-1 rounded-lg bg-aura-900 border border-aura-800/80 hover:border-aura-700 transition-colors"
+            className="hidden lg:flex items-center gap-2 px-2 py-1 rounded-lg bg-aura-900 border border-aura-800/80 hover:border-aura-700 transition-colors cursor-pointer"
             title="Open Tactile Deck & Spectrum"
           >
             <VisualizerCanvas
@@ -157,7 +160,7 @@ export const AudioPlayer: React.FC = () => {
           <TactileButton
             variant="ghost"
             size="icon-sm"
-            onClick={toggleQueue}
+            onClick={() => setIsQueueOpen(!isQueueOpen)}
             active={isQueueOpen}
             aria-label="Listening queue (Q)"
             className="relative"
@@ -165,7 +168,7 @@ export const AudioPlayer: React.FC = () => {
           >
             <ListMusic className="w-4 h-4" />
             {queue.length > 0 && (
-              <span className="absolute 1 top-1 right-1 w-2 h-2 rounded-full bg-aura-accent" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-aura-accent" />
             )}
           </TactileButton>
 
@@ -197,3 +200,5 @@ export const AudioPlayer: React.FC = () => {
     </div>
   );
 };
+
+export default AudioPlayer;
