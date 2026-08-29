@@ -5,6 +5,7 @@ import { QueueDrawer } from '../components/player/QueueDrawer';
 import { ExpandedPlayerModal } from '../components/player/ExpandedPlayerModal';
 import { SearchPalette } from '../components/search/SearchPalette';
 import { KeyboardShortcutsModal } from '../components/common/KeyboardShortcutsModal';
+import { ToastContainer } from '../components/ui/Toast';
 import { VisualizerCanvas } from '../components/player/VisualizerCanvas';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -23,6 +24,7 @@ export const RootLayout = () => {
     { path: '/favorites', label: 'Favorites' },
     { path: '/recent', label: 'Recent' },
     { path: '/about', label: 'About' },
+    { path: '/design-test', label: 'Design System' },
   ];
 
   return (
@@ -193,6 +195,7 @@ export const RootLayout = () => {
       <ExpandedPlayerModal />
       <SearchPalette />
       <KeyboardShortcutsModal />
+      <ToastContainer />
     </div>
   );
 };

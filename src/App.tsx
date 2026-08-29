@@ -10,6 +10,7 @@ import { AboutPage } from './pages/AboutPage';
 import { AlbumDetailPage } from './pages/AlbumDetailPage';
 import { ArtistDetailPage } from './pages/ArtistDetailPage';
 import { PlaylistDetailPage } from './pages/PlaylistDetailPage';
+import { DesignTestPage } from './pages/DesignTestPage';
 
 export function App() {
   return (
@@ -24,6 +25,9 @@ export function App() {
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="recent" element={<RecentPage />} />
           <Route path="about" element={<AboutPage />} />
+
+          {/* Design System Test Page */}
+          <Route path="design-test" element={<DesignTestPage />} />
 
           {/* Dynamic Detail Routes */}
           <Route path="album/:id" element={<AlbumDetailPage />} />
